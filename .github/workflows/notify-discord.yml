@@ -1,30 +1,28 @@
 name: Notify Discord on commit
 on:
   push:
-    branches: [ main ] # troque se quiser outro branch
+    branches: [main]
 
 jobs:
   discord_notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Montar mensagem
-        id: msg
+      - name: Enviar pro Discord
         run: |
           SHA="${{ github.sha }}"
           SHORT_SHA="${SHA::7}"
           ACTOR="${{ github.actor }}"
           REPO="${{ github.repository }}"
-          MSG="$(echo "${{ github.event.head_commit.message }}" | sed 's/"/\\"/g')"
+          MSG="${{ github.event.head_commit.message }}"
           URL="https://github.com/${REPO}/commit/${SHA}"
-          echo "content=🟢 **${REPO}**
-👤 ${ACTOR}
-📝 ${MSG}
-🔗 ${URL}
-#️⃣ ${SHORT_SHA}" >> $GITHUB_OUTPUT
 
-      - name: Enviar pro Discord
-        run: |
-          jq -n --arg c "${{ steps.msg.outputs.content }}" '{content:$c}' \
-          | curl -sS -H "Content-Type: application/json" -d @- "$DISCORD_WEBHOOK_URL"
+          CONTENT="🟢 **${REPO}**
+          👤 ${ACTOR}
+          📝 ${MSG}
+          🔗 ${URL}
+          #️⃣ ${SHORT_SHA}"
+
+          jq -n --arg c "$CONTENT" '{content:$c}' \
+            | curl -sS -H "Content-Type: application/json" -d @- "$DISCORD_WEBHOOK_URL"
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
